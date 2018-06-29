@@ -2,8 +2,10 @@ package com.example.georg.map;
 
 import android.location.Address;
 import android.location.Geocoder;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -12,12 +14,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    TextToSpeech t1;
+    int result;
+    String address;
+    double lat = 41.881832;
+    double lng = -87.623177;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +36,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+
+        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        List<Address> addresser = null;
+
+        if (geoCoder != null) {
+            try {
+                addresser = geoCoder.getFromLocation(lat, lng, 1);
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            if (addresser.size() > 0) {
+                address = addresser.get(0).getAddressLine(0);
+            }
+        }
+
+        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    result = t1.setLanguage(Locale.UK);
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Toast.makeText(getApplicationContext(), "language not supported", Toast.LENGTH_SHORT).show();
+                    } else {
+                        t1.speak(address, TextToSpeech.QUEUE_FLUSH, null);
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "feature not available", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
     }
 
 
@@ -43,34 +87,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng coord = new LatLng(31.2001, 29.9187);
+        LatLng coord = new LatLng(lat, lng);
         mMap.addMarker(new MarkerOptions().position(coord).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(coord));
+        float zoomLevel = 16.0f; //This goes up to 21
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coord, zoomLevel));
+
+
     }
 
 
-    private String getCompleteAddressString(double LATITUDE, double LONGITUDE) {
-        String strAdd = "";
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        try {
-            List<Address> addresses = geocoder.getFromLocation(LATITUDE, LONGITUDE, 1);
-            if (addresses != null) {
-                Address returnedAddress = addresses.get(0);
-                StringBuilder strReturnedAddress = new StringBuilder("");
 
-                for (int i = 0; i <= returnedAddress.getMaxAddressLineIndex(); i++) {
-                    strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
-                }
-                strAdd = strReturnedAddress.toString();
-                Log.w("My Current loction address", strReturnedAddress.toString());
-            } else {
-                Log.w("My Current loction address", "No Address returned!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.w("My Current loction address", "Canont get Address!");
-        }
-        return strAdd;
-    }
 }

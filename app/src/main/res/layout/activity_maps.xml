@@ -6,3 +6,4 @@
     tools:context="com.example.georg.map.MapsActivity"
     android:name="com.google.android.gms.maps.SupportMapFragment"
     tools:layout="@layout/activity_maps" />
+
